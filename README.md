@@ -63,7 +63,7 @@ final_project/
 │   │   │   └── seed.js               # Realistic college carpool seed data
 │   │   └── server.js                 # Express server & static production host
 │   ├── data/
-│   │   └── carpool.db                # SQLite database file (WAL mode)
+│   │   └── carpool_system.db         # SQLite database file (WAL mode)
 │   ├── test_suite.js                 # Automated business logic test suite (19/19 tests)
 │   └── package.json
 ├── frontend/

@@ -62,9 +62,21 @@ class SmtpClient {
       };
 
       const onSocketError = (err) => {
+        const errorCode = err.code ? ` (${err.code})` : '';
+        const errorDetails = [
+          `host=${config.host}`,
+          `port=${config.port}`,
+          `phase=${state}`
+        ].join(', ');
+        const hint = ['ECONNREFUSED', 'ETIMEDOUT', 'EHOSTUNREACH'].includes(err.code)
+          ? ' Check outbound SMTP access, or try SMTP_PORT=587.'
+          : err.code === 'ENOTFOUND' || err.code === 'EAI_AGAIN'
+            ? ' Check SMTP_HOST and DNS connectivity.'
+            : '';
+
         finish({
           sent: false,
-          reason: `Socket connection failed: ${err.message}`
+          reason: `SMTP connection failed${errorCode} (${errorDetails}): ${err.message}.${hint}`
         });
       };
 

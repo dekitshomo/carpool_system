@@ -7,7 +7,7 @@ if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
-const dbPath = process.env.DB_PATH || path.join(dataDir, 'carpool.db');
+const dbPath = process.env.DB_PATH || path.join(dataDir, 'carpool_system.db');
 const db = new DatabaseSync(dbPath);
 
 // Enable Foreign Keys and WAL mode for better concurrency and integrity

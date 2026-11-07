@@ -1,6 +1,6 @@
 // Isolate test database so test runs never wipe user data in carpool.db
 const path = require('node:path');
-process.env.DB_PATH = path.join(__dirname, 'data', 'test_carpool.db');
+process.env.DB_PATH = path.join(__dirname, 'data', 'test_carpool_system.db');
 
 const { DatabaseSync } = require('node:sqlite');
 const fs = require('node:fs');
@@ -207,21 +207,21 @@ async function runTests() {
     assert(sentEmail !== undefined && sentEmail.verification_code === testCode, 'Verification email successfully recorded in SentEmails');
     assert(
       sentEmail.subject.includes('Carpool System') &&
-        !/Carpool System/i.test(sentEmail.subject) &&
-        !/Carpool System/i.test(sentEmail.body_html),
+        !/Zhenphen/i.test(sentEmail.subject) &&
+        !/Zhenphen/i.test(sentEmail.body_html),
       'New verification email uses Carpool System branding'
     );
 
     db.prepare('UPDATE SentEmails SET subject = ?, body_html = ? WHERE id = ?').run(
-      'Your Carpool System verification code',
-      '<img alt="Carpool System Association Charity & Carpool"><p>Enter your code on Carpool System</p>',
+      'Your Zhenphen verification code',
+      '<img alt="Zhenphen Association Charity & Carpool"><p>Enter your code on Zhenphen</p>',
       sentEmail.id
     );
     const displayedEmail = emailService.getInboxForEmail(testRegEmail)[0];
     assert(
       displayedEmail.subject.includes('Carpool System') &&
         displayedEmail.body_html.includes('Carpool System') &&
-        !/Carpool System/i.test(displayedEmail.subject + displayedEmail.body_html) &&
+        !/Zhenphen/i.test(displayedEmail.subject + displayedEmail.body_html) &&
         !/<img/i.test(displayedEmail.body_html),
       'Saved verification previews replace legacy branding and logo'
     );
