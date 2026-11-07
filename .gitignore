@@ -1,0 +1,15 @@
+node_modules/
+**/node_modules/
+
+.env
+.env.*
+!.env.example
+
+backend/data/*.db
+backend/data/*.db-*
+backend/data/pre-recovery-*/
+
+frontend/carpool_system/
+frontend/dist/
+
+npm-debug.log*
