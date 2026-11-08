@@ -217,10 +217,10 @@ export const RegisterPage = () => {
                   <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 rounded-2xl space-y-2.5 text-xs">
                     <div className="flex items-center gap-2 font-black text-amber-900 dark:text-amber-300">
                       <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                      <span>Live Gmail Delivery Requires Sender Setup</span>
+                      <span>Live Email Delivery Requires Backend Setup</span>
                     </div>
                     <p className="text-amber-800 dark:text-amber-400 leading-relaxed">
-                      Emails cannot reach your inbox yet because <strong>SMTP_USER</strong> and <strong>SMTP_PASS</strong> are empty in <code className="bg-amber-200/60 dark:bg-amber-900/60 px-1.5 py-0.5 rounded text-[11px] font-mono">backend/.env</code>.
+                      Live delivery is not configured. For Render, set the Google Apps Script Web App URL and shared secret in the backend service's Environment settings. For local SMTP, configure <strong>SMTP_USER</strong> and <strong>SMTP_PASS</strong> in <code className="bg-amber-200/60 dark:bg-amber-900/60 px-1.5 py-0.5 rounded text-[11px] font-mono">backend/.env</code>.
                     </p>
                     <button
                       type="button"
@@ -228,7 +228,7 @@ export const RegisterPage = () => {
                       className="mt-1 w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-xl font-black text-xs shadow-md shadow-emerald-700/20 transition cursor-pointer"
                     >
                       <Mail className="w-3.5 h-3.5" />
-                      <span>⚙️ Connect My Gmail Account (To Deliver to Real Inboxes) &rarr;</span>
+                      <span>⚙️ Set Up Local Gmail SMTP &rarr;</span>
                     </button>
                   </div>
                 )}

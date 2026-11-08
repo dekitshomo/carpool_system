@@ -167,7 +167,7 @@ export const VerifyEmailPage = () => {
                 <div className="flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 flex-shrink-0 text-amber-600 mt-0.5" />
                   <span>
-                    To receive verification emails directly into your real Gmail app, <strong>SMTP credentials</strong> must be connected below or set in <code className="bg-amber-200/60 dark:bg-amber-900/60 px-1 py-0.5 rounded font-mono text-[11px]">backend/.env</code>.
+                    The hosted Render app must have the Google Apps Script Web App URL and shared secret configured in the backend service's Environment settings. Gmail SMTP may time out on hosting networks. Local development can use SMTP settings in <code className="bg-amber-200/60 dark:bg-amber-900/60 px-1 py-0.5 rounded font-mono text-[11px]">backend/.env</code>.
                   </span>
                 </div>
                 <div>
@@ -177,7 +177,7 @@ export const VerifyEmailPage = () => {
                     className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-xl font-bold text-xs shadow-sm transition cursor-pointer"
                   >
                     <Mail className="w-3.5 h-3.5" />
-                    <span>⚙️ Connect Gmail (To Send to Real Inboxes) &rarr;</span>
+                    <span>⚙️ Set Up Local Gmail SMTP &rarr;</span>
                   </button>
                 </div>
               </div>

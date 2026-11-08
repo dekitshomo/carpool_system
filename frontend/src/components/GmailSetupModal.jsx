@@ -89,6 +89,10 @@ export const GmailSetupModal = ({ isOpen, onClose, currentEmail = '', onSuccess 
 
         {/* Content */}
         <div className="p-6 overflow-y-auto space-y-5 text-xs">
+
+          <div className="p-3.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-2xl text-amber-900 dark:text-amber-300 leading-relaxed">
+            Gmail SMTP can time out on hosted services. For Render, configure the Google Apps Script Web App URL and shared secret in the backend service's Environment settings; do not enter secrets in this form or frontend code.
+          </div>
           
           {/* Quick Guide Card */}
           <div className="p-4 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl space-y-2.5 text-emerald-900 dark:text-emerald-300">
