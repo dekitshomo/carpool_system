@@ -163,13 +163,13 @@ exports.register = async (req, res) => {
     if (!emailResult.live_sent) {
       console.error(`\n🚨 [EMAIL DISPATCH NOTICE] Live email could not be delivered to ${cleanEmail}`);
       console.error(`   Reason: ${emailResult.reason}`);
-      console.error(`   Action: Set SMTP_USER & SMTP_PASS in backend/.env or use the in-app Gmail setup modal.\n`);
+      console.error(`   Action: Check the ${emailService.getProvider()} email provider configuration.\n`);
 
-      // If credentials were provided in .env but failed (e.g. wrong password), return clear error
-      if (process.env.SMTP_USER && process.env.SMTP_USER.trim()) {
+      // If provider credentials are configured but delivery failed, return the actual error.
+      if (emailService.requiresLiveDelivery()) {
         return res.status(502).json({
           success: false,
-          message: `Unable to send verification email to ${cleanEmail}. Gmail SMTP error: ${emailResult.reason}`,
+          message: `Unable to send verification email to ${cleanEmail}. Email delivery error: ${emailResult.reason}`,
           error_code: 'EMAIL_DELIVERY_FAILED',
           reason: emailResult.reason
         });
@@ -178,13 +178,13 @@ exports.register = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: emailResult.live_sent 
-        ? 'Verification email dispatched to your Gmail inbox! Enter the 6-digit code to complete account creation.'
+      message: emailResult.live_sent
+        ? 'Verification email sent. Enter the 6-digit code to complete account creation.'
         : 'Verification code dispatched to your email account! Enter the 6-digit code to complete account creation.',
       requires_email_verification: true,
       pending_email: cleanEmail,
       live_sent: emailResult.live_sent,
-      smtp_reason: emailResult.reason
+      email_reason: emailResult.reason
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -443,10 +443,10 @@ exports.resendVerification = async (req, res) => {
         frontendUrl: getFrontendUrl(req)
       });
 
-      if (!emailResult.live_sent && process.env.SMTP_USER && process.env.SMTP_USER.trim()) {
+      if (!emailResult.live_sent && emailService.requiresLiveDelivery()) {
         return res.status(502).json({
           success: false,
-          message: `Unable to resend verification email to ${cleanEmail}. Gmail SMTP error: ${emailResult.reason}`,
+          message: `Unable to resend verification email to ${cleanEmail}. Email delivery error: ${emailResult.reason}`,
           error_code: 'EMAIL_DELIVERY_FAILED',
           reason: emailResult.reason
         });
@@ -454,8 +454,8 @@ exports.resendVerification = async (req, res) => {
 
       return res.json({
         success: true,
-        message: emailResult.live_sent 
-          ? `A fresh 6-digit code has been sent directly to your Gmail inbox!`
+        message: emailResult.live_sent
+          ? 'A fresh 6-digit code has been sent to your inbox!'
           : `A fresh 6-digit code has been dispatched to ${cleanEmail}.`,
         live_sent: emailResult.live_sent
       });
@@ -489,10 +489,19 @@ exports.resendVerification = async (req, res) => {
       frontendUrl: getFrontendUrl(req)
     });
 
+    if (!emailResult.live_sent && emailService.requiresLiveDelivery()) {
+      return res.status(502).json({
+        success: false,
+        message: `Unable to resend verification email to ${cleanEmail}. Email delivery error: ${emailResult.reason}`,
+        error_code: 'EMAIL_DELIVERY_FAILED',
+        reason: emailResult.reason
+      });
+    }
+
     return res.json({
       success: true,
-      message: emailResult.live_sent 
-        ? `A fresh 6-digit code has been sent directly to your Gmail inbox!`
+      message: emailResult.live_sent
+        ? 'A fresh 6-digit code has been sent to your inbox!'
         : `A fresh 6-digit code has been dispatched to ${cleanEmail}.`,
       live_sent: emailResult.live_sent
     });

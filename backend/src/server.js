@@ -3,6 +3,12 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const express = require('express');
 const cors = require('cors');
 const { initSchema } = require('./models/schema');
+const emailService = require('./services/emailService');
+
+console.log('EMAIL CONFIG CHECK:', {
+  provider: emailService.getProvider(),
+  configured: emailService.isConfigured()
+});
 
 const authRoutes = require('./routes/authRoutes');
 const tripRoutes = require('./routes/tripRoutes');

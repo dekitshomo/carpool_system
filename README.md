@@ -145,14 +145,56 @@ npm test
 
 ### Step 4: Run the Application
 
-### Gmail verification email setup
+### Verification email setup
 
-To deliver registration verification emails to real inboxes, configure the backend sender with a Gmail App Password:
+For the Render deployment, use a Google Apps Script Web App. It sends through HTTPS and avoids the SMTP ports timing out on Render.
 
-1. Enable 2-Step Verification on the sender's Google account and create an App Password at [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords).
-2. Set `SMTP_USER` and `SMTP_PASS` in `backend/.env` (use the App Password, not your Gmail login password).
-3. Set `FRONTEND_URL` to the URL students use to open the app (for example, `http://localhost:3000` locally).
-4. Restart the backend. The root `npm start` command loads settings from `backend/.env`.
+1. Sign in to the Gmail account that should send verification messages and open [script.google.com](https://script.google.com/). Create a new project.
+2. Replace the editor contents with the script below. Replace `REPLACE_WITH_A_LONG_RANDOM_SECRET` with a private random value; use the exact same value for `GOOGLE_APPS_SCRIPT_SECRET` in Render.
+3. Click **Deploy > New deployment**, select **Web app**, set **Execute as** to **Me**, and set access to **Anyone**. Authorize the requested Gmail permission, deploy, and copy the Web app URL ending in `/exec`.
+4. In the Render backend service's **Environment** settings, set:
+   - `EMAIL_PROVIDER=google-apps-script`
+   - `GOOGLE_APPS_SCRIPT_URL` to the deployed `/exec` URL
+   - `GOOGLE_APPS_SCRIPT_SECRET` to the same random secret in the script
+   - `FRONTEND_URL=https://carpool-system.onrender.com`
+5. Save the settings and deploy the latest backend code. Confirm the startup log reports `provider: 'google-apps-script'` and `configured: true`.
+
+```javascript
+const SHARED_SECRET = 'REPLACE_WITH_A_LONG_RANDOM_SECRET';
+
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    if (data.secret !== SHARED_SECRET) {
+      return jsonResponse({ ok: false, error: 'Unauthorized request.' });
+    }
+
+    if (!data.to || !data.subject || !data.text) {
+      return jsonResponse({ ok: false, error: 'Missing required email fields.' });
+    }
+
+    GmailApp.sendEmail(data.to, data.subject, data.text, {
+      htmlBody: data.html || data.text,
+      name: 'Carpool System'
+    });
+
+    return jsonResponse({ ok: true });
+  } catch (error) {
+    console.error(error);
+    return jsonResponse({ ok: false, error: 'Email could not be sent.' });
+  }
+}
+
+function jsonResponse(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+```
+
+Keep the script secret and Render environment variables private. The Apps Script runs under your Gmail account and is subject to Google's sending quotas. For local development or a host that allows SMTP, set `EMAIL_PROVIDER=smtp` and configure `SMTP_USER` and `SMTP_PASS` in `backend/.env`.
+
+For local development or a host that allows SMTP, set `EMAIL_PROVIDER=smtp`, then configure `SMTP_USER` and `SMTP_PASS` in `backend/.env`. Use a Google App Password, not the normal Gmail password. The root `npm start` command loads settings from `backend/.env`.
 
 The verification link opens the frontend; `APP_URL` is the backend URL and is not used for email links.
 

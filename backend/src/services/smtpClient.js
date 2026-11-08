@@ -69,7 +69,9 @@ class SmtpClient {
           `phase=${state}`
         ].join(', ');
         const hint = ['ECONNREFUSED', 'ETIMEDOUT', 'EHOSTUNREACH'].includes(err.code)
-          ? ' Check outbound SMTP access, or try SMTP_PORT=587.'
+          ? config.port === 465
+            ? ' Check outbound SMTP access, or try SMTP_PORT=587.'
+            : ' Outbound SMTP access may be blocked; use an HTTPS email API provider on this host.'
           : err.code === 'ENOTFOUND' || err.code === 'EAI_AGAIN'
             ? ' Check SMTP_HOST and DNS connectivity.'
             : '';

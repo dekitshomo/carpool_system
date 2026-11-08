@@ -1,11 +1,27 @@
 const db = require('../config/db');
 const smtpClient = require('./smtpClient');
+const googleAppsScriptClient = require('./googleAppsScriptClient');
 
 /**
  * College Email Dispatch Service
  * Formats Carpool System verification emails.
  */
 class EmailService {
+  getProvider() {
+    return (process.env.EMAIL_PROVIDER || 'smtp').trim().toLowerCase();
+  }
+
+  isConfigured() {
+    const provider = this.getProvider();
+    if (provider === 'google-apps-script') return googleAppsScriptClient.isConfigured();
+    if (provider === 'smtp') return smtpClient.isConfigured();
+    return false;
+  }
+
+  requiresLiveDelivery() {
+    return this.getProvider() !== 'smtp' || this.isConfigured();
+  }
+
   /**
    * Dispatch a student verification email
    */
@@ -160,24 +176,34 @@ class EmailService {
     const bodyText = `Carpool System email verification\n\nHello ${displayName},\n\nEnter this code on the Carpool System verification page:\n\n${spacedCode}\n\nOpen the verification page: ${verifyUrl}\n\n(Code expires in 24 hours)`;
 
     try {
-      // 1. Attempt live SMTP delivery (Gmail, Outlook, or College SMTP)
-      let smtpStatus = 'recorded';
+      // 1. Attempt live delivery through the configured provider.
+      const provider = this.getProvider();
+      const mailClient = provider === 'google-apps-script'
+        ? googleAppsScriptClient
+        : provider === 'smtp'
+          ? smtpClient
+          : null;
+      let deliveryStatus = 'recorded';
       let liveSent = false;
-      let smtpReason = '';
+      let deliveryReason = '';
 
       try {
-        const smtpResult = await smtpClient.sendMail({
-          to: toEmail,
-          subject,
-          html: bodyHtml,
-          text: bodyText
-        });
-        liveSent = smtpResult.sent;
-        smtpReason = smtpResult.reason || '';
-        smtpStatus = liveSent ? 'delivered_live_smtp' : 'recorded_simulated';
-      } catch (smtpErr) {
-        smtpReason = smtpErr.message;
-        smtpStatus = 'recorded_simulated';
+        if (!mailClient) {
+          deliveryReason = `Unsupported EMAIL_PROVIDER "${provider}". Set it to "google-apps-script" or "smtp".`;
+        } else {
+          const mailResult = await mailClient.sendMail({
+            to: toEmail,
+            subject,
+            html: bodyHtml,
+            text: bodyText
+          });
+          liveSent = mailResult.sent;
+          deliveryReason = mailResult.reason || '';
+        }
+        deliveryStatus = liveSent ? `delivered_live_${provider}` : 'recorded_simulated';
+      } catch (deliveryError) {
+        deliveryReason = deliveryError.message;
+        deliveryStatus = 'recorded_simulated';
       }
 
       // 2. Record email in SentEmails table for audit & simulated college mailbox preview
@@ -185,7 +211,7 @@ class EmailService {
         INSERT INTO SentEmails (to_email, subject, body_html, verification_code, status)
         VALUES (?, ?, ?, ?, ?)
       `);
-      stmt.run(toEmail, subject, bodyHtml, code, smtpStatus);
+      stmt.run(toEmail, subject, bodyHtml, code, deliveryStatus);
 
       // 3. High-visibility console log for local testing
       console.log('\n======================================================');
@@ -194,7 +220,7 @@ class EmailService {
       console.log(`Recipient Name:     ${displayName}`);
       console.log(`Subject:            ${subject}`);
       console.log(`Verification Code:  [ ${spacedCode} ]`);
-      console.log(`Live SMTP Sent:     ${liveSent ? '✅ YES (Delivered to real Gmail inbox)' : 'ℹ️ NO (' + smtpReason + ')'}`);
+      console.log(`Live Email Sent:    ${liveSent ? `✅ YES (${provider})` : 'ℹ️ NO (' + deliveryReason + ')'}`);
       console.log(`Direct Link:        ${verifyUrl}`);
       console.log('======================================================\n');
 
@@ -204,7 +230,8 @@ class EmailService {
         code,
         formatted_code: spacedCode,
         live_sent: liveSent,
-        reason: smtpReason,
+        provider,
+        reason: deliveryReason,
         message: liveSent
           ? 'Carpool System verification email sent directly to your inbox!'
           : 'Carpool System verification email recorded in the simulated mailbox'

@@ -226,6 +226,54 @@ async function runTests() {
       'Saved verification previews replace legacy branding and logo'
     );
 
+    console.log('\nTest Group 10b: Google Apps Script HTTPS Email Delivery');
+    const appsScriptClient = require('./src/services/googleAppsScriptClient');
+    const originalFetch = global.fetch;
+    const originalAppsScriptEnv = {
+      EMAIL_PROVIDER: process.env.EMAIL_PROVIDER,
+      GOOGLE_APPS_SCRIPT_URL: process.env.GOOGLE_APPS_SCRIPT_URL,
+      GOOGLE_APPS_SCRIPT_SECRET: process.env.GOOGLE_APPS_SCRIPT_SECRET
+    };
+    try {
+      process.env.EMAIL_PROVIDER = 'google-apps-script';
+      process.env.GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/test/exec';
+      process.env.GOOGLE_APPS_SCRIPT_SECRET = 'test-shared-secret';
+      let appsScriptRequest;
+      global.fetch = async (url, options) => {
+        appsScriptRequest = { url, options };
+        return { ok: true, status: 200, json: async () => ({ ok: true }) };
+      };
+
+      const appsScriptResult = await appsScriptClient.sendMail({
+        to: 'student@example.com',
+        subject: 'Verification code',
+        html: '<p>123456</p>',
+        text: '123456'
+      });
+      const sendBody = JSON.parse(appsScriptRequest.options.body);
+
+      assert(
+        appsScriptResult.sent &&
+          appsScriptRequest.url === process.env.GOOGLE_APPS_SCRIPT_URL &&
+          appsScriptRequest.options.redirect === 'follow' &&
+          sendBody.secret === 'test-shared-secret',
+        'Google Apps Script requests are sent over HTTPS with the shared secret'
+      );
+      assert(
+        sendBody.to === 'student@example.com' &&
+          sendBody.subject === 'Verification code' &&
+          sendBody.html === '<p>123456</p>' &&
+          sendBody.text === '123456',
+        'Google Apps Script receives the email recipient, subject, and both message bodies'
+      );
+    } finally {
+      global.fetch = originalFetch;
+      for (const [key, value] of Object.entries(originalAppsScriptEnv)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+    }
+
     // Register a new student and test verification flow
     const bcrypt = require('bcryptjs');
     const testHash = bcrypt.hashSync('testpass123', 10);
